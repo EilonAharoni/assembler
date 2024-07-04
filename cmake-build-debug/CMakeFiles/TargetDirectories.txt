@@ -1,0 +1,3 @@
+/Users/eilonaharoni/DataS/asm/cmake-build-debug/CMakeFiles/asm.dir
+/Users/eilonaharoni/DataS/asm/cmake-build-debug/CMakeFiles/edit_cache.dir
+/Users/eilonaharoni/DataS/asm/cmake-build-debug/CMakeFiles/rebuild_cache.dir

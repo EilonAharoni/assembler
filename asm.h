@@ -27,6 +27,8 @@ int find_label(Label* head, char* label);
 void free_list(Label* head);
 void parse_line(const char *line, char *optcode, char *rd, char *rs, char *rt, int *imm, int *imm_flag, char *memin_line,Label* labelList);
 int transOptcode(char *optcode);
+void write_default_lines(FILE *file, long start, long end);
+void process_word_command(const char *command, FILE *file);
 void translate_register(char *reg_name, char *memin_line);
 Label* first_run(FILE *file);
 

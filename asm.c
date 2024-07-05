@@ -71,9 +71,7 @@ void parse_line(const char *line, char *optcode, char *rd, char *rs, char *rt, i
                     if (*imm !=-1)
                         break;
 
-//                if(strncmp("0x", field, 2) == 0)
-//                    *imm = (int)strtol(field,NULL,16);
-//                else
+
                     *imm = (int)strtol(field,NULL,0);
 
                 *imm_flag = 1;
@@ -269,7 +267,70 @@ void translate_register(char *reg_name, char *memin_line) {
 }
 
 
+void write_default_lines(FILE *file, long start, long end) {
+    if (fseek(file, start, SEEK_SET) != 0) {
+        perror("Error seeking in file");
+        return;
+    }
 
+    for (long i = start; i < end; i += LINE_LENGTH) {
+        if (fprintf(file, "%s", DEFAULT_LINE) < 0) {
+            perror("Error writing to file");
+            return;
+        }
+    }
+}
+void process_word_command(const char *command, FILE *file) {
+    char *cmd = strdup(command);
+    char *token = strtok(cmd, " ");
+    if (token == NULL || strstr(token, ".word") ==NULL) {
+        fprintf(stderr, "Error: Invalid .word command format\n");
+        free(cmd);
+        return;
+    }
+
+    // Read the address
+    token = strtok(NULL, " ");
+    if (token == NULL) {
+        fprintf(stderr, "Error: Invalid .word command format\n");
+        free(cmd);
+        return;
+    }
+    int address = (int)strtol(token, NULL, 0);
+
+    // Read the value
+    token = strtok(NULL, " ");
+    if (token == NULL) {
+        fprintf(stderr, "Error: Invalid .word command format\n");
+        free(cmd);
+        return;
+    }
+    int value = (int)strtol(token, NULL, 0);
+
+    free(cmd);
+
+    long offset = address * LINE_LENGTH;
+
+    // Get current file size
+    fseek(file, 0, SEEK_END);
+    long file_size = ftell(file);
+
+    if (offset > file_size) {
+        // Write default lines to extend the file
+        write_default_lines(file, file_size, offset);
+    }
+
+    // Seek to the correct offset in the file
+    if (fseek(file, offset, SEEK_SET) != 0) {
+        perror("Error seeking in file");
+        return;
+    }
+
+    // Write the value at the specified address in hexadecimal format
+    if (fprintf(file, "%05x\n", value) < 0) {
+        perror("Error writing to file");
+    }
+}
 
 int main(int argc, char *argv[]) {
     if (argc < 2) {
@@ -298,8 +359,8 @@ int main(int argc, char *argv[]) {
     int imm_flag = 0;
     char memin_line[6]; // Array to hold "2 hex digits" for opcode, rd, rs, rt, and an extra char for '\0'
     unsigned int masked_imm;
-//    Label *labels[MAX_LABELS]; // Array of pointers to labels
-    int label_count = 0;
+
+
 
     // First pass to collect labels and update PC
     Label* labelList = first_run(fRead);
@@ -327,11 +388,12 @@ int main(int argc, char *argv[]) {
             continue;
         }
 
-        // Process each line
         parse_line(line, optcode, rd, rs, rt, &imm, &imm_flag, memin_line,labelList);
-//        if(strcmp(memin_line,"XX") == 0 ){//if it is a word. command
-//            process_word_command(line,fWrite);
-//        }
+        if(strcmp(optcode,".word") == 0 ){//if it is a word. command
+            strcpy(memin_line,rd);
+            process_word_command(line,fWrite);
+            continue;
+        }
 
 
         // Print the parsed data (for demonstration)
